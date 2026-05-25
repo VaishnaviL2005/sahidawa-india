@@ -34,6 +34,7 @@ async function readJsonSafely(response: Response) {
     }
 }
 
+
 export async function transcribeRecordedAudio(
     file: File,
     selectedLanguage?: string
@@ -50,14 +51,21 @@ export async function transcribeRecordedAudio(
     });
 
     const data = await readJsonSafely(response);
+    
+if (!response.ok) {
+    const error = new Error(
+        data &&
+            typeof data === "object" &&
+            typeof data.error === "string" &&
+            data.error.trim()
+            ? data.error
+            : "Transcription failed."
+    ) as Error & { status?: number };
 
-    if (!response.ok) {
-        throw new Error(
-            data && typeof data === "object" && typeof data.error === "string" && data.error.trim()
-                ? data.error
-                : "Transcription failed."
-        );
-    }
+    error.status = response.status;
+
+    throw error;
+}
 
     return normalizeVoiceTranscriptionResponse({
         transcript: String(data && typeof data === "object" ? (data.transcript ?? "") : ""),

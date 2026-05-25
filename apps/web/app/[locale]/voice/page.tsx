@@ -101,7 +101,33 @@ function getRecognitionErrorState(
             };
     }
 }
+function getServerErrorState(
+    status: number,
+    t: ReturnType<typeof useTranslations>
+): VoiceErrorState {
+    switch (status) {
+        case 503:
+            return {
+                type: "service-unavailable",
+                title: t("errors.service_unavailable_title"),
+                message: t("errors.service_unavailable_message"),
+            };
 
+        case 504:
+            return {
+                type: "timeout",
+                title: t("errors.timeout_title"),
+                message: t("errors.timeout_message"),
+            };
+
+        default:
+            return {
+                type: "generic",
+                title: t("errors.generic_title"),
+                message: t("errors.generic_message"),
+            };
+    }
+}
 function getConfidenceValueLabel(
     confidence: ConfidenceMeta,
     t: ReturnType<typeof useTranslations>
@@ -527,17 +553,30 @@ export default function VoiceTriagePage() {
             const transcription = await transcribeRecordedAudio(file, activeWorkflowLanguage);
             await consumeTranscription(transcription);
         } catch (transcriptionError) {
-            closeStreamingSession();
-            setStreamingStatusValue("idle");
-            setError({
-                title: t("errors.generic_title"),
-                message:
-                    transcriptionError instanceof Error && transcriptionError.message
-                        ? transcriptionError.message
-                        : t("errors.generic_message"),
-            });
-            setStep("error");
-        }
+    closeStreamingSession();
+    setStreamingStatusValue("idle");
+
+    const errorStatus =
+        transcriptionError instanceof Error &&
+        "status" in transcriptionError
+            ? Number(transcriptionError.status)
+            : undefined;
+
+    if (errorStatus === 503 || errorStatus === 504) {
+        setError(getServerErrorState(errorStatus, t));
+    } else {
+        setError({
+            type: "generic",
+            title: t("errors.generic_title"),
+            message:
+                transcriptionError instanceof Error && transcriptionError.message
+                    ? transcriptionError.message
+                    : t("errors.generic_message"),
+        });
+    }
+
+    setStep("error");
+}
     }
 
     async function analyseTranscript(
@@ -1216,11 +1255,13 @@ export default function VoiceTriagePage() {
                     )}
 
                     {step === "error" && error && (
-                        <VoiceErrorPanel
-                            error={error}
-                            retryLabel={t("retry_button")}
-                            onRetry={() => resetFlow()}
-                        />
+                     <VoiceErrorPanel
+        error={error}
+        retryLabel={t("retry_button")}
+        switchToTextLabel={t("switch_to_text_button")}
+        onRetry={() => resetFlow()}
+        onSwitchToText={() => resetFlow()}
+    />
                     )}
 
                     {step === "result" && result && (
