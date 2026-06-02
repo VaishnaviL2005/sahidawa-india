@@ -275,7 +275,7 @@ export default function SearchBar({ dark = false }: { dark?: boolean }) {
                         className="flex shrink-0 items-center gap-2 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-500/25 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-95"
                         aria-label="Submit search"
                     >
-                        <Search size={16} aria-hidden="true"/>
+                        <Search size={16} aria-hidden="true" />
                         {tHome("search_button")}
                     </button>
                 </div>
