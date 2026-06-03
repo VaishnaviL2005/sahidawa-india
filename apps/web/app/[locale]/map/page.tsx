@@ -29,6 +29,7 @@ import {
     fetchVerifiedPharmaciesInBounds,
     type VerifiedPharmacy,
 } from "../../../lib/api";
+import MapView from '@/components/map/MapView';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const DEFAULT_CENTER = { lat: 28.6139, lng: 77.209 }; // New Delhi
