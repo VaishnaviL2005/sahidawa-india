@@ -58,6 +58,7 @@ def get_pr_metadata() -> dict:
     return {
         "title": get_env_or_exit("PR_TITLE"),
         "author": get_env_or_exit("PR_AUTHOR"),
+        "author_avatar": os.environ.get("PR_AUTHOR_AVATAR", ""),
         "url": get_env_or_exit("PR_URL"),
         "number": os.environ.get("PR_NUMBER", "N/A"),
         "labels": os.environ.get("PR_LABELS", ""),
@@ -260,9 +261,11 @@ def generate_post_with_gemini(pr: dict, tier_display: str, tier_desc: str) -> st
         f"PR Link: {pr['url']}\n"
         f"Project: {PROJECT_NAME} — {PROJECT_TAGLINE}\n"
         f"PR Description: {pr['body'] if pr['body'] else 'Not provided'}\n\n"
+        f"### Technical Context (Use this to explain their impact) ###\n"
+        f"{pr['diff'][:15000] if pr.get('diff') else 'No diff provided.'}\n\n"
         f"CRITICAL REQUIREMENTS:\n"
         f"1. Start by directly thanking the contributor and including their LinkedIn profile link: {pr['linkedin_url']} in a warm, personal way.\n"
-        f"2. Mention briefly what they built ({pr['title']}) and why it's important for the project.\n"
+        f"2. Look at the Technical Context (the code diff) and briefly summarize the technical impact they made (e.g. 'They optimized the notification module'). Make them feel proud of the exact files/logic they improved.\n"
         f"3. Make them feel truly valued. Tell them their hard work is making a real difference in this {tier_display} task. Motivate them to keep solving issues.\n"
         f"4. End by warmly welcoming new developers to join the journey (GSSoC2026), with the repo link: {PROJECT_GITHUB_URL}\n"
         f"5. Keep the text short and easy to read. Do NOT use heavy bullet points, bolding, or too many emojis.\n"
@@ -285,32 +288,48 @@ def generate_post_with_gemini(pr: dict, tier_display: str, tier_desc: str) -> st
         ]
     }
 
-    try:
-        print("🤖 Calling Gemini AI to generate post...")
-        resp = requests.post(url, headers={"Content-Type": "application/json"},
-                             json=payload, timeout=30)
-        resp.raise_for_status()
-        resp_json = resp.json()
-        
-        candidates = resp_json.get("candidates", [])
-        if not candidates:
-            raise KeyError("No candidates returned from Gemini API")
+    import time
+    
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            print(f"🤖 Calling Gemini AI to generate post... (Attempt {attempt}/{max_retries})")
+            resp = requests.post(url, headers={"Content-Type": "application/json"},
+                                 json=payload, timeout=30)
             
-        candidate = candidates[0]
-        content = candidate.get("content", {})
-        parts = content.get("parts", [])
-        if not parts:
-            finish_reason = candidate.get("finishReason")
-            raise KeyError(f"No content parts returned. finishReason: {finish_reason}")
+            if resp.status_code == 429:
+                print(f"⏳ Rate limit hit (429). Retrying in 20 seconds...")
+                time.sleep(20)
+                continue
+                
+            resp.raise_for_status()
+            resp_json = resp.json()
             
-        text = parts[0].get("text", "").strip()
-        
-        print("\n✅ Script completed successfully!")
-        print("✅ Gemini post generated successfully.")
-        return text
-    except Exception as exc:
-        print(f"⚠️  Gemini AI failed ({exc}). Using static fallback.")
-        return _static_fallback(pr, tier_display)
+            candidates = resp_json.get("candidates", [])
+            if not candidates:
+                raise KeyError("No candidates returned from Gemini API")
+                
+            candidate = candidates[0]
+            content = candidate.get("content", {})
+            parts = content.get("parts", [])
+            if not parts:
+                finish_reason = candidate.get("finishReason")
+                raise KeyError(f"No content parts returned. finishReason: {finish_reason}")
+                
+            text = parts[0].get("text", "").strip()
+            
+            print("\n✅ Script completed successfully!")
+            print("✅ Gemini post generated successfully.")
+            return text
+            
+        except Exception as exc:
+            if attempt == max_retries:
+                print(f"⚠️  Gemini AI failed after {max_retries} attempts ({exc}). Using static fallback.")
+                return _static_fallback(pr, tier_display)
+            print(f"⚠️  Gemini AI failed ({exc}). Retrying in 10 seconds...")
+            time.sleep(10)
+            
+    return _static_fallback(pr, tier_display)
 
 
 def _static_fallback(pr: dict, tier_display: str) -> str:
@@ -353,6 +372,7 @@ def send_to_make_webhook(post_text: str, pr: dict) -> None:
       - pr_url      : Direct link to the PR
       - pr_number   : PR number
       - tier        : "level:advanced" or "level:critical"
+      - author_avatar : URL to contributor's GitHub avatar
     """
     webhook_url = get_env_or_exit("MAKE_WEBHOOK_URL")
 
@@ -363,6 +383,7 @@ def send_to_make_webhook(post_text: str, pr: dict) -> None:
         "post_text": post_text,
         "pr_title": pr["title"],
         "pr_author": pr["author"],
+        "author_avatar": pr.get("author_avatar", ""),
         "pr_url": pr["url"],
         "pr_number": pr["number"],
         "tier": tier,

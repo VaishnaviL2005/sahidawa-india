@@ -102,6 +102,7 @@ jobs:
                       core.setOutput('pr_body', body);
                       core.setOutput('pr_repo', context.repo.owner + '/' + context.repo.repo);
                       core.setOutput('pr_lines_changed', linesChanged.toString());
+                      core.setOutput('pr_author_avatar', pr.user.avatar_url);
 
                       console.log(`PR: #${pr.number} "${pr.title}" by @${pr.user.login}`);
                       console.log(`Labels: ${labels}`);
@@ -140,6 +141,7 @@ jobs:
                   # PR Metadata from previous step
                   PR_TITLE: ${{ steps.pr_meta.outputs.pr_title }}
                   PR_AUTHOR: ${{ steps.pr_meta.outputs.pr_author }}
+                  PR_AUTHOR_AVATAR: ${{ steps.pr_meta.outputs.pr_author_avatar }}
                   PR_URL: ${{ steps.pr_meta.outputs.pr_url }}
                   PR_NUMBER: ${{ steps.pr_meta.outputs.pr_number }}
                   PR_LABELS: ${{ steps.pr_meta.outputs.pr_labels }}
