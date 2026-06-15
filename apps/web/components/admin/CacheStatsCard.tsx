@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentType } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { ADMIN_API_BASE } from "@/lib/adminApi";
@@ -10,23 +11,25 @@ function getToken(): string {
 }
 
 // SSR-safe Recharts import — fixes hydration mismatch (issue #1303)
-const BarChart = dynamic<any>(() => import("recharts").then((mod) => mod.BarChart as any), {
+const BarChart = dynamic(
+    () => import("recharts").then((mod) => mod.BarChart as ComponentType<any>),
+    { ssr: false }
+);
+const Bar = dynamic(
+    () => import("recharts").then((mod) => mod.Bar as unknown as ComponentType<any>),
+    { ssr: false }
+);
+const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis as ComponentType<any>), {
     ssr: false,
 });
-const Bar = dynamic<any>(() => import("recharts").then((mod) => mod.Bar as any), {
+const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis as ComponentType<any>), {
     ssr: false,
 });
-const XAxis = dynamic<any>(() => import("recharts").then((mod) => mod.XAxis as any), {
+const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip as ComponentType<any>), {
     ssr: false,
 });
-const YAxis = dynamic<any>(() => import("recharts").then((mod) => mod.YAxis as any), {
-    ssr: false,
-});
-const Tooltip = dynamic<any>(() => import("recharts").then((mod) => mod.Tooltip as any), {
-    ssr: false,
-});
-const ResponsiveContainer = dynamic<any>(
-    () => import("recharts").then((mod) => mod.ResponsiveContainer as any),
+const ResponsiveContainer = dynamic(
+    () => import("recharts").then((mod) => mod.ResponsiveContainer as ComponentType<any>),
     { ssr: false }
 );
 
