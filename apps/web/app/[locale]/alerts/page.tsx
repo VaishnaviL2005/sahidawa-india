@@ -26,6 +26,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useInView } from "react-intersection-observer";
 
+// Debounce hook for search inputs - prevents API calls on every keystroke
+function useDebounce(value: string, delay: number = 300) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+}
+
 function formatRelativeTime(dateString: string | null): string {
     if (!dateString) return "Recent";
 
@@ -62,6 +79,10 @@ export default function FullAlertsLogPage() {
     const [totalCount, setTotalCount] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
+    // Debounced search values - prevents API calls on every keystroke
+    const debouncedBrandSearch = useDebounce(brandSearch, 300);
+    const debouncedRegionSearch = useDebounce(regionSearch, 300);
+
     // Accordion active expanded state
     const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null);
 
@@ -81,8 +102,9 @@ export default function FullAlertsLogPage() {
     const fetchAlerts = async (pageNum: number, append = false) => {
         try {
             let url = `${API_BASE}/api/v1/alerts?page=${pageNum}&limit=50`;
-            if (brandSearch) url += `&brand=${encodeURIComponent(brandSearch)}`;
-            if (regionSearch) url += `&region=${encodeURIComponent(regionSearch)}`;
+            if (debouncedBrandSearch) url += `&brand=${encodeURIComponent(debouncedBrandSearch)}`;
+            if (debouncedRegionSearch)
+                url += `&region=${encodeURIComponent(debouncedRegionSearch)}`;
 
             const res = await fetch(url);
             if (!res.ok) {
@@ -104,7 +126,7 @@ export default function FullAlertsLogPage() {
         }
     };
 
-    // Initial load and when filters change
+    // Initial load and when debounced filters change
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -116,7 +138,7 @@ export default function FullAlertsLogPage() {
 
         const timer = setTimeout(loadData, 400);
         return () => clearTimeout(timer);
-    }, [brandSearch, regionSearch]);
+    }, [debouncedBrandSearch, debouncedRegionSearch]);
 
     // Load more when page changes (triggered by intersection observer)
     useEffect(() => {
