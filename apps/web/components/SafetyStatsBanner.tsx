@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Link } from "@/i18n/routing";
 import {
     Ban,
     RotateCcw,
@@ -135,8 +136,9 @@ function StatCard({ config, count }: { config: StatConfig; count: number }) {
     const Icon = config.icon;
 
     return (
-        <div
-            className={`group relative overflow-hidden rounded-2xl border border-slate-100/80 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-slate-200/80 dark:border-slate-800/80 dark:bg-slate-900 dark:hover:border-slate-700/80 ${config.glowColor}`}
+        <Link
+            href="/alerts"
+            className={`group relative block overflow-hidden rounded-2xl border border-slate-100/80 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-slate-200/80 dark:border-slate-800/80 dark:bg-slate-900 dark:hover:border-slate-700/80 ${config.glowColor}`}
         >
             {/* Coloured accent top bar */}
             <div
@@ -186,7 +188,7 @@ function StatCard({ config, count }: { config: StatConfig; count: number }) {
                 className={`pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${config.iconGradient}`}
                 style={{ opacity: 0 }}
             />
-        </div>
+        </Link>
     );
 }
 
