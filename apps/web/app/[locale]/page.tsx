@@ -138,9 +138,9 @@ export default function SahiDawaHome() {
         <div className="relative min-h-screen bg-(--color-surface-page) font-sans text-(--color-text-primary) transition-colors duration-300">
             {/* ── Background Mesh (Static & High Performance) ── */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none">
-                <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-purple-500/10 blur-[130px] dark:bg-purple-900/10"></div>
-                <div className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-emerald-500/10 blur-[130px] dark:bg-emerald-900/10"></div>
-                <div className="absolute bottom-10 left-1/4 h-[600px] w-[600px] rounded-full bg-blue-500/10 blur-[130px] dark:bg-blue-900/10"></div>
+                <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-purple-500/10 blur-[130px] transition-colors duration-300 dark:bg-purple-900/10"></div>
+                <div className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full bg-emerald-500/10 blur-[130px] transition-colors duration-300 dark:bg-emerald-900/10"></div>
+                <div className="absolute bottom-10 left-1/4 h-[600px] w-[600px] rounded-full bg-blue-500/10 blur-[130px] transition-colors duration-300 dark:bg-blue-900/10"></div>
             </div>
 
             {/* ── Main ── */}
